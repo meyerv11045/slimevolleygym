@@ -13,15 +13,30 @@ from stable_baselines.common.policies import MlpPolicy
 from stable_baselines import logger
 from stable_baselines.common.callbacks import EvalCallback
 
+import argparse
+
+ap = argparse.ArgumentParser()
+ap.add_argument('-s', '--seed', type=int, default=367)
+ap.add_argument('-e', '--env', type=str, help="[baseline or ppo]")
+args = ap.parse_args()
+
 NUM_TIMESTEPS = int(2e7)
-SEED = 721
+SEED = args.seed
 EVAL_FREQ = 250000
 EVAL_EPISODES = 1000
-LOGDIR = "ppo1" # moved to zoo afterwards.
+
+if args.env == 'baseline':
+    LOGDIR = f"results/sub/baseline{SEED}"
+else:
+    LOGDIR = f"results/sub/ppo{SEED}"
 
 logger.configure(folder=LOGDIR)
 
-env = gym.make("SlimeVolley-v0")
+if args.env == 'baseline':
+    env = gym.make("SlimeVolleyBaseline-v0")
+else:
+    env = gym.make("SlimeVolleyPPOExpert-v0")
+
 env.seed(SEED)
 
 # take mujoco hyperparams (but doubled timesteps_per_actorbatch to cover more steps.)

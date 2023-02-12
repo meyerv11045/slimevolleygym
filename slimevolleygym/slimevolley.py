@@ -1,17 +1,3 @@
-"""
-Port of Neural Slime Volleyball to Python Gym Environment
-
-David Ha (2020)
-
-Original version:
-
-https://otoro.net/slimevolley
-https://blog.otoro.net/2015/03/28/neural-slime-volleyball/
-https://github.com/hardmaru/neuralslimevolley
-
-No dependencies apart from Numpy and Gym
-"""
-
 import logging
 import math
 import gym
@@ -21,6 +7,9 @@ from gym.envs.registration import register
 import numpy as np
 import cv2 # installed with gym anyways
 from collections import deque
+
+from slimevolleygym.mlp import makeSlimePolicy, makeSlimePolicyLite
+from stable_baselines import PPO1
 
 np.set_printoptions(threshold=20, precision=3, suppress=True, linewidth=200)
 
@@ -51,7 +40,7 @@ FACTOR = WINDOW_WIDTH / REF_W
 
 # if set to true, renders using cv2 directly on numpy array
 # (otherwise uses pyglet / opengl -> much smoother for human player)
-PIXEL_MODE = False 
+PIXEL_MODE = False
 PIXEL_SCALE = 4 # first render at multiple of Pixel Obs resolution, then downscale. Looks better.
 
 PIXEL_WIDTH = 84*2*1
@@ -67,7 +56,7 @@ def setNightColors():
   AGENT_RIGHT_COLOR = (255, 236, 0)
   PIXEL_AGENT_LEFT_COLOR = (255, 191, 0) # AMBER
   PIXEL_AGENT_RIGHT_COLOR = (255, 191, 0) # AMBER
-  
+
   BACKGROUND_COLOR = (11, 16, 19)
   FENCE_COLOR = (102, 56, 35)
   COIN_COLOR = FENCE_COLOR
@@ -88,7 +77,7 @@ def setDayColors():
   AGENT_RIGHT_COLOR = (0, 150, 255)
   PIXEL_AGENT_LEFT_COLOR = (240, 75, 0)
   PIXEL_AGENT_RIGHT_COLOR = (0, 150, 255)
-  
+
   BACKGROUND_COLOR = (255, 255, 255)
   FENCE_COLOR = (240, 210, 130)
   COIN_COLOR = FENCE_COLOR
@@ -470,6 +459,13 @@ class Agent:
 
     return canvas
 
+class PPOPolicy:
+  def __init__(self):
+    self.model = PPO1.load("/Users/vikram/s23/ai/slimevolleygym/zoo/ppo/best_model.zip")
+  def predict(self, obs):
+    action, state = self.model.predict(obs, deterministic=True)
+    return action
+
 class BaselinePolicy:
   """ Tiny RNN policy with only 120 parameters of otoro.net/slimevolley agent """
   def __init__(self):
@@ -479,7 +475,7 @@ class BaselinePolicy:
 
     self.nOutput = self.nGameOutput+self.nRecurrentState
     self.nInput = self.nGameInput+self.nOutput
-    
+
     # store current inputs and outputs
     self.inputState = np.zeros(self.nInput)
     self.outputState = np.zeros(self.nOutput)
@@ -775,7 +771,7 @@ class SlimeVolleyEnv(gym.Env):
 
     if self.otherAction is not None:
       otherAction = self.otherAction
-      
+
     if otherAction is None: # override baseline policy
       obs = self.game.agent_left.getObservation()
       otherAction = self.policy.predict(obs)
@@ -870,7 +866,7 @@ class SlimeVolleyEnv(gym.Env):
   def close(self):
     if self.viewer:
       self.viewer.close()
-    
+
   def get_action_meanings(self):
     return [self.atari_action_meaning[i] for i in self.atari_action_set]
 
@@ -885,6 +881,24 @@ class SlimeVolleySurvivalAtariEnv(SlimeVolleyEnv):
   from_pixels = True
   atari_mode = True
   survival_bonus = True
+
+class SlimeVolleyEnvPPOExpert(SlimeVolleyEnv):
+  def __init__(self):
+    super().__init__()
+    # expert policy to play against
+    self.policy = PPOPolicy()
+
+class SlimeVolleyEnvGAExpert(SlimeVolleyEnv):
+  def __init__(self):
+    super().__init__()
+    # expert policy to play against
+    self.policy = makeSlimePolicyLite()
+
+class SlimeVolleyEnvCMAExpert(SlimeVolleyEnv):
+    def __init__(self):
+      super().__init__()
+      # expert policy to play against
+      self.policy = makeSlimePolicy()
 
 class SurvivalRewardEnv(gym.RewardWrapper):
   def __init__(self, env):
@@ -992,30 +1006,6 @@ def render_atari(obs):
   tempObs = np.concatenate([tempObs*255.0] * 3, axis=2).astype(np.uint8)
   tempObs = cv2.resize(tempObs, (84 * 8, 84 * 2), interpolation=cv2.INTER_NEAREST)
   return np.concatenate([latest, tempObs], axis=0)
-
-####################
-# Reg envs for gym #
-####################
-
-register(
-    id='SlimeVolley-v0',
-    entry_point='slimevolleygym.slimevolley:SlimeVolleyEnv'
-)
-
-register(
-    id='SlimeVolleyPixel-v0',
-    entry_point='slimevolleygym.slimevolley:SlimeVolleyPixelEnv'
-)
-
-register(
-    id='SlimeVolleyNoFrameskip-v0',
-    entry_point='slimevolleygym.slimevolley:SlimeVolleyAtariEnv'
-)
-
-register(
-    id='SlimeVolleySurvivalNoFrameskip-v0',
-    entry_point='slimevolleygym.slimevolley:SlimeVolleySurvivalAtariEnv'
-)
 
 if __name__=="__main__":
   """

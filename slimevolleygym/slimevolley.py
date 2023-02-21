@@ -3,7 +3,6 @@ import math
 import gym
 from gym import spaces
 from gym.utils import seeding
-from gym.envs.registration import register
 import numpy as np
 import cv2 # installed with gym anyways
 from collections import deque

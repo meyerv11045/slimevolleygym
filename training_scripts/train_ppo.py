@@ -17,7 +17,10 @@ import argparse
 
 ap = argparse.ArgumentParser()
 ap.add_argument('-s', '--seed', type=int, default=367)
-ap.add_argument('-e', '--env', type=str, help="[baseline or ppo]")
+ap.add_argument('-e', '--env', type=str, default="baseline", help="[baseline or ppo]")
+ap.add_argument('-g', '--gamma', type=float, default=0.99)
+ap.add_argument('--entcoeff', type=float, default=0.0)
+ap.add_argument('--subfolder', type=str,required=True)
 args = ap.parse_args()
 
 NUM_TIMESTEPS = int(2e7)
@@ -26,9 +29,9 @@ EVAL_FREQ = 250000
 EVAL_EPISODES = 1000
 
 if args.env == 'baseline':
-    LOGDIR = f"results/sub/baseline{SEED}"
+    LOGDIR = f"results/{args.subfolder}/baseline{SEED}"
 else:
-    LOGDIR = f"results/sub/ppo{SEED}"
+    LOGDIR = f"results/{args.subfolder}/ppo{SEED}"
 
 logger.configure(folder=LOGDIR)
 
@@ -40,8 +43,8 @@ else:
 env.seed(SEED)
 
 # take mujoco hyperparams (but doubled timesteps_per_actorbatch to cover more steps.)
-model = PPO1(MlpPolicy, env, timesteps_per_actorbatch=4096, clip_param=0.2, entcoeff=0.0, optim_epochs=10,
-                 optim_stepsize=3e-4, optim_batchsize=64, gamma=0.99, lam=0.95, schedule='linear', verbose=2)
+model = PPO1(MlpPolicy, env, timesteps_per_actorbatch=4096, clip_param=0.2, entcoeff=args.entcoeff, optim_epochs=10,
+                 optim_stepsize=3e-4, optim_batchsize=64, gamma=args.gamma, lam=0.95, schedule='linear', verbose=2)
 
 eval_callback = EvalCallback(env, best_model_save_path=LOGDIR, log_path=LOGDIR, eval_freq=EVAL_FREQ, n_eval_episodes=EVAL_EPISODES)
 

@@ -23,12 +23,12 @@ BEST_THRESHOLD = 0.5 # must achieve a mean score above this to replace prev best
 
 RENDER_MODE = False # set this to false if you plan on running for full 1000 trials.
 
-LOGDIR = "ppo1_selfplay"
+LOGDIR = "results/ppo1_selfplay"
 
-class SlimeVolleySelfPlayEnv(slimevolleygym.SlimeVolleyEnv):
+class VariantSelfPlayEnv(slimevolleygym.VariantEnv):
   # wrapper over the normal single player env, but loads the best self play model
   def __init__(self):
-    super(SlimeVolleySelfPlayEnv, self).__init__()
+    super(VariantSelfPlayEnv, self).__init__()
     self.policy = self
     self.best_model = None
     self.best_model_filename = None
@@ -50,7 +50,7 @@ class SlimeVolleySelfPlayEnv(slimevolleygym.SlimeVolleyEnv):
         if self.best_model is not None:
           del self.best_model
         self.best_model = PPO1.load(filename, env=self)
-    return super(SlimeVolleySelfPlayEnv, self).reset()
+    return super(VariantSelfPlayEnv, self).reset()
 
 class SelfPlayCallback(EvalCallback):
   # hacked it to only save new version of best model if beats prev self by BEST_THRESHOLD score
@@ -94,7 +94,7 @@ def train():
   # train selfplay agent
   logger.configure(folder=LOGDIR)
 
-  env = SlimeVolleySelfPlayEnv()
+  env = VariantSelfPlayEnv()
   env.seed(SEED)
 
   # take mujoco hyperparams (but doubled timesteps_per_actorbatch to cover more steps.)

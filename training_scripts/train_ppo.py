@@ -17,7 +17,7 @@ import argparse
 
 ap = argparse.ArgumentParser()
 ap.add_argument('-s', '--seed', type=int, default=367)
-ap.add_argument('-e', '--env', type=str, default="baseline", help="[baseline or ppo]")
+ap.add_argument('-e', '--env', type=str, default="baseline", help="[baseline, ppo, variant]")
 ap.add_argument('-g', '--gamma', type=float, default=0.99)
 ap.add_argument('--entcoeff', type=float, default=0.0)
 ap.add_argument('--subfolder', type=str,required=True)
@@ -35,10 +35,14 @@ else:
 
 logger.configure(folder=LOGDIR)
 
-if args.env == 'baseline':
+if args.env == 'ppo':
+    env = gym.make("SlimeVolleyPPOExpert-v0")
+elif args.env == 'variant':
+    env = gym.make("Variant-v0")
+elif args.env == 'baseline':
     env = gym.make("SlimeVolleyBaseline-v0")
 else:
-    env = gym.make("SlimeVolleyPPOExpert-v0")
+    raise ValueError("env not supported")
 
 env.seed(SEED)
 

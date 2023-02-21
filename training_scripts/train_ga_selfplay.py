@@ -26,7 +26,7 @@ def mutate(length, mutation_rate, mutation_sigma):
   return mask * noise
 
 # Log results
-logdir = "ga_selfplay"
+logdir = "results/ga_selfplay"
 if not os.path.exists(logdir):
   os.makedirs(logdir)
 
@@ -42,7 +42,7 @@ population = np.random.normal(size=(population_size, param_count)) * 0.5 # each 
 winning_streak = [0] * population_size # store the number of wins for this agent (including mutated ones)
 
 # create the gym environment, and seed it
-env = gym.make("SlimeVolley-v0")
+env = gym.make("Variant-v0")
 env.seed(random_seed)
 np.random.seed(random_seed)
 

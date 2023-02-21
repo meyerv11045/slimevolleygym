@@ -1,6 +1,7 @@
 import slimevolleygym.slimevolley
 import slimevolleygym.mlp
 from slimevolleygym.slimevolley import *
+from slimevolleygym.variant import VariantEnv
 from gym.envs.registration import register
 
 
@@ -41,4 +42,9 @@ register(
 register(
     id='SlimeVolleySurvivalNoFrameskip-v0',
     entry_point='slimevolleygym.slimevolley:SlimeVolleySurvivalAtariEnv'
+)
+
+register(
+    id='Variant-v0',
+    entry_point='slimevolleygym.variant:VariantEnv'
 )
